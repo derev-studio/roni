@@ -58,6 +58,13 @@ h1{font-family:Georgia,serif;font-size:27px;margin-bottom:6px}
 .deth summary::-webkit-details-marker{display:none}
 .sw{width:27px;height:27px;border-radius:9px;border:1.5px solid rgba(150,130,90,.55);cursor:pointer}
 .sw.on{outline:2.5px solid #e8c96a;outline-offset:2px}
+.note{background:var(--bg);border:1px solid var(--brd);border-radius:12px;padding:9px 26px 9px 12px;margin:7px 0;text-align:right;position:relative;font-size:15px;line-height:1.5}
+.note .tm{font-size:11.5px;color:var(--tiny);display:block;margin-top:3px}
+.note img{max-width:100%;border-radius:10px;margin-top:6px;cursor:pointer}
+.note img.big{position:fixed;top:5%;right:5%;left:5%;max-width:90%;z-index:99;box-shadow:0 10px 40px rgba(0,0,0,.7)}
+.note .nx{position:absolute;top:6px;left:8px;color:var(--tiny);font-size:15px;cursor:pointer;padding:2px 6px}
+.note.due{border-color:#f7cb4a;box-shadow:0 0 10px rgba(247,203,74,.5)}
+.filebtn{display:inline-block;font-size:13.5px;color:var(--giftx);border:1px solid var(--brd);border-radius:999px;padding:5px 12px;cursor:pointer;margin:2px 0 6px}
 </style>
 </head>
 <body>
@@ -114,6 +121,16 @@ h1{font-family:Georgia,serif;font-size:27px;margin-bottom:6px}
 <div class="panel">🗺 <b>מפה ופקקים</b><br>
 <iframe id="wmap" class="wmap" src="https://embed.waze.com/he/iframe?zoom=11&lat=32.0853&lon=34.7818" loading="lazy"></iframe>
 <a class="btn gold" style="margin:8px 0 0" href="https://waze.com/ul" target="_blank" rel="noopener">לפתוח ב-Waze</a>
+</div>
+
+<div class="panel">📝 <b>הפתקים שלי</b><br>
+<textarea class="inp" id="ntx" rows="2" placeholder="כתוב כאן מה שצריך לזכור…" style="resize:vertical"></textarea>
+<span class="lbl">⏰ תזכורת — לא חובה</span>
+<input class="inp" type="datetime-local" id="ndue" style="font-size:14px">
+<label class="filebtn">📷 להוסיף תמונה<input type="file" id="nimg" accept="image/*" style="display:none"></label>
+<span id="nimgok" style="font-size:12.5px;color:#4dff7a"></span>
+<button class="btn gold" style="margin:8px 0 4px" onclick="addNote()">שמור פתק</button>
+<div id="nlist"></div>
 </div>
 
 <div class="ge" style="margin:20px 0 4px;font-family:Georgia,serif;font-size:19px;line-height:1.6">תודה שבחרתם בי —<br>נסיעה טובה ונעימה! 🚕✨</div>
@@ -183,6 +200,30 @@ if(navigator.geolocation){navigator.geolocation.getCurrentPosition(
 function order(){const v=i=>document.getElementById(i).value.trim();
  const t='🚕 הזמנת נסיעה!\n'+'מתי: '+v('owh')+'\nמאיפה: '+v('ofr')+'\nלאן: '+v('oto');
  window.open('https://wa.me/972532790555?text='+encodeURIComponent(t),'_blank')}
+function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+let NOTES=[];try{NOTES=JSON.parse(localStorage.getItem('roni-notes')||'[]')}catch(e){NOTES=[]}
+let NIMG='';
+document.getElementById('nimg').addEventListener('change',function(){const f=this.files[0];if(!f)return;
+ const r=new FileReader();r.onload=e=>{const im=new Image();im.onload=()=>{const cv=document.createElement('canvas');
+  const k=Math.min(1,700/Math.max(im.width,im.height));cv.width=im.width*k;cv.height=im.height*k;
+  cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);NIMG=cv.toDataURL('image/jpeg',.7);
+  document.getElementById('nimgok').textContent='✔ תמונה מצורפת'};im.src=e.target.result};r.readAsDataURL(f)});
+function saveNotes(){try{localStorage.setItem('roni-notes',JSON.stringify(NOTES))}catch(e){alert('אין מספיק מקום — מחק פתקים ישנים')}}
+function addNote(){const t=document.getElementById('ntx').value.trim();const due=document.getElementById('ndue').value;
+ if(!t&&!NIMG)return;
+ NOTES.unshift({t:t,due:due||'',img:NIMG});saveNotes();
+ document.getElementById('ntx').value='';document.getElementById('ndue').value='';NIMG='';
+ document.getElementById('nimgok').textContent='';renderNotes()}
+function delNote(i){NOTES.splice(i,1);saveNotes();renderNotes()}
+function renderNotes(){let h='';const now=Date.now();let dueAny=false;
+ NOTES.forEach((n,i)=>{const due=n.due&&(new Date(n.due).getTime()<=now);if(due)dueAny=true;
+  h+='<div class="note'+(due?' due':'')+'"><span class="nx" onclick="delNote('+i+')">✕</span>'+(due?'🔔 ':'')
+   +escH(n.t).replace(/\n/g,'<br>')
+   +(n.img?'<br><img src="'+n.img+'" onclick="this.classList.toggle(\'big\')">':'')
+   +(n.due?'<span class="tm">⏰ '+new Date(n.due).toLocaleString('he-IL',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})+'</span>':'')
+   +'</div>'});
+ document.getElementById('nlist').innerHTML=(dueAny?'<div style="color:#f7cb4a;font-weight:700;margin:6px 0">🔔 יש לך תזכורת!</div>':'')+h}
+renderNotes();setInterval(renderNotes,60000);
 function dl(id,name){
  const a=document.createElement('a');
  a.download=name;
