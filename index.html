@@ -65,6 +65,8 @@ h1{font-family:Georgia,serif;font-size:27px;margin-bottom:6px}
 .note .nx{position:absolute;top:6px;left:8px;color:var(--tiny);font-size:15px;cursor:pointer;padding:2px 6px}
 .note.due{border-color:#f7cb4a;box-shadow:0 0 10px rgba(247,203,74,.5)}
 .filebtn{display:inline-block;font-size:13.5px;color:var(--giftx);border:1px solid var(--brd);border-radius:999px;padding:5px 12px;cursor:pointer;margin:2px 0 6px}
+#nprev img{width:56px;height:56px;object-fit:cover;border-radius:10px;border:1.5px solid #c88c1c;margin:0 6px;vertical-align:middle;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+#nprev .rx{color:#c88c1c;cursor:pointer;font-size:14px;padding:2px 5px;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -123,12 +125,12 @@ h1{font-family:Georgia,serif;font-size:27px;margin-bottom:6px}
 <a class="btn gold" style="margin:8px 0 0" href="https://waze.com/ul" target="_blank" rel="noopener">לפתוח ב-Waze</a>
 </div>
 
-<div class="panel">📝 <b>הפתקים שלי</b><br>
+<div class="panel">📝 <b>פתקים אישיים</b> <span style="font-size:12px;color:var(--tiny)">· נשמר רק בטלפון שלך, אף אחד אחר לא רואה</span><br>
 <textarea class="inp" id="ntx" rows="2" placeholder="כתוב כאן מה שצריך לזכור…" style="resize:vertical"></textarea>
 <span class="lbl">⏰ תזכורת — לא חובה</span>
 <input class="inp" type="datetime-local" id="ndue" style="font-size:14px">
 <label class="filebtn">📷 להוסיף תמונה<input type="file" id="nimg" accept="image/*" style="display:none"></label>
-<span id="nimgok" style="font-size:12.5px;color:#4dff7a"></span>
+<span id="nprev"></span>
 <button class="btn gold" style="margin:8px 0 4px" onclick="addNote()">שמור פתק</button>
 <div id="nlist"></div>
 </div>
@@ -207,13 +209,14 @@ document.getElementById('nimg').addEventListener('change',function(){const f=thi
  const r=new FileReader();r.onload=e=>{const im=new Image();im.onload=()=>{const cv=document.createElement('canvas');
   const k=Math.min(1,700/Math.max(im.width,im.height));cv.width=im.width*k;cv.height=im.height*k;
   cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);NIMG=cv.toDataURL('image/jpeg',.7);
-  document.getElementById('nimgok').textContent='✔ תמונה מצורפת'};im.src=e.target.result};r.readAsDataURL(f)});
+  document.getElementById('nprev').innerHTML='<img src="'+NIMG+'"><span class="rx" onclick="clrImg()">✕</span>'};im.src=e.target.result};r.readAsDataURL(f)});
+function clrImg(){NIMG='';document.getElementById('nprev').innerHTML='';document.getElementById('nimg').value=''}
 function saveNotes(){try{localStorage.setItem('roni-notes',JSON.stringify(NOTES))}catch(e){alert('אין מספיק מקום — מחק פתקים ישנים')}}
 function addNote(){const t=document.getElementById('ntx').value.trim();const due=document.getElementById('ndue').value;
  if(!t&&!NIMG)return;
  NOTES.unshift({t:t,due:due||'',img:NIMG});saveNotes();
  document.getElementById('ntx').value='';document.getElementById('ndue').value='';NIMG='';
- document.getElementById('nimgok').textContent='';renderNotes()}
+ document.getElementById('nprev').innerHTML='';document.getElementById('nimg').value='';renderNotes()}
 function delNote(i){NOTES.splice(i,1);saveNotes();renderNotes()}
 function renderNotes(){let h='';const now=Date.now();let dueAny=false;
  NOTES.forEach((n,i)=>{const due=n.due&&(new Date(n.due).getTime()<=now);if(due)dueAny=true;
